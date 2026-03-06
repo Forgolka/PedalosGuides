@@ -244,3 +244,42 @@ body {
 ::-webkit-scrollbar-track { background: #2b2d31; }
 ::-webkit-scrollbar-thumb { background: #1a1a1d; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+/* --- СТАТИЧНА СТОРІНКА (ВСТУП) --- */
+.static-page {
+    max-width: 900px; /* Обмежуємо ширину тексту, щоб зручно читати */
+    margin: 0 auto;   /* Центруємо блок */
+    color: #dbdee1;
+    line-height: 1.7;
+    animation: fadeIn 0.4s ease;
+}
+
+.static-page h1 {
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 20px;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 10px;
+}
+
+.static-page h2 {
+    font-size: 1.8rem;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    color: #f2f3f5;
+}
+
+.static-page p {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+/* Прихований блок */
+.hidden {
+    display: none !important;
+}
+
+/* Анімація появи */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
