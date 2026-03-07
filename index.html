@@ -3,23 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- ПРАВКА: Заголовок вкладки -->
     <title>Pedalos Team Guides</title>
-    <link rel="icon" href="logo.png" type="image/png">
-    <link rel="stylesheet" href="style.css">
+    <!-- Підключаємо іконку з папки images -->
+    <link rel="icon" href="images/logo.png" type="image/png">
+    <!-- Підключаємо стилі з папки css -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+    <!-- Кнопка мобільного меню -->
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰ Меню</button>
 
     <div class="app-container">
         <!-- Ліва панель -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <!-- ПРАВКА: Назва команди -->
-                <h2>Pedalos Team</h2>
-            </div>
-            <nav id="role-list" class="nav-list">
-                <!-- Сюди JS додасть: "Мануал Клінера", "Мануал Тайпера" і т.д. -->
-            </nav>
+<div class="sidebar-header">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Pedalos Team</h2>
+        <!-- Кнопка перемикання теми -->
+        <button id="theme-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="Змінити тему">
+            🌙
+        </button>
+    </div>
+    
+    <!-- Кнопка закриття меню (тільки для мобільних) -->
+    <button class="close-menu-mobile" onclick="toggleMobileMenu(false)" style="float:right; background:none; border:none; color:var(--text-main); font-size:1.5rem; display:none;">✕</button>
+</div>
+            <nav id="role-list" class="nav-list"></nav>
         </aside>
 
         <!-- Головна область -->
@@ -28,9 +38,7 @@
                 <h1 id="page-title">Оберіть мануал зліва</h1>
             </header>
 
-            <div id="guides-grid" class="cards-grid">
-                <!-- Картки розділів (Вступ, Інструменти) з'являться тут -->
-            </div>
+            <div id="guides-grid" class="cards-grid"></div>
             <div id="static-content" class="static-page hidden"></div>
         </main>
     </div>
@@ -39,501 +47,19 @@
     <div id="guide-modal" class="modal-overlay hidden">
         <div class="modal-window">
             <button class="close-btn" onclick="closeModal()">✕</button>
-            <div class="modal-content" id="modal-body">
-                <!-- Контент -->
-            </div>
+            <div class="modal-content" id="modal-body"></div>
         </div>
     </div>
 
-    <script>
-        // ==========================================
-        // БАЗА ДАНИХ
-        // ==========================================
+    <!-- Підключаємо скрипти (спочатку дані, потім логіку) -->
+    <script src="js/data.js"></script>
+    <script src="js/script.js"></script>
 
-        const rolesConfig = {
-            'intro': 'Вступ',
-            'cleaner': 'Мануал Клінера',
-            'typer': 'Мануал Тайпера',
-            'translator': 'Мануал Перекладача',
-            'editor': 'Мануал Редактора',
-            'test' : 'Тест',
-        };
-
-        // Текст для сторінки Вступу
-        const introContentData = [
-            { type: 'header', text: "Вітаємо у хабі знань Pedalos Team!" },
-            { type: 'text', text: "Цей ресурс створений як єдина база знань для всіх, хто прагне створювати якісний український сканлейт. Незалежно від того, чи ти повний новачoк, чи досвідчений майстер, тут ти знайдеш структуровані мануали з усіх ключових напрямків:" },
-            {
-                type: 'list', items: [
-                    "🧹 Клін: Очищення сторінок від японського тексту, відновлення текстур та робота з артефактами.",
-                    "🖋️ Тайп: Мистецтво верстки тексту, вибір шрифтів та створення динамічних звукових ефектів.",
-                    "🌍 Переклад: Правила адаптації, збереження контексту та передача емоцій оригіналу.",
-                    "📝 Редактура: Фінальна шліфовка тексту, перевірка правопису та стилістики."
-                ]
-            },
-            { type: 'text', text: "<br>" },
-            { type: 'info', text: "Автори: Forgolka, Gemini 3 Pro" },
-            { type: 'image', src: "team_cover.png" },
-            { type: 'info', text: "Навчайтеся, вдосконалюйте навички та допомагайте нам робити український контент кращим. Приємного читання! Оберіть свою роль у меню зліва, щоб почати навчання." },
-        ];
-
-        // Картки гайдів
-        const guidesData = [
-            // --- ГАЙДИ ДЛЯ КЛІНЕРА ---
-            {
-                id: 2,
-                role: 'cleaner',
-                title: "Базові інструменти",
-                category: "Інструментарій",
-                previewImage: "tools_preview.png",
-                content: [
-                    { type: 'header', text: "Базові інструменти Photoshop" },
-                    { type: 'text', text: "Тут зібрані основні інструменти, необхідні для кліну. При наведенні курсору на інструмент у Photoshop відображається його гаряча клавіша." },
-                    { type: 'subheader', text: "Переміщення та Трансформація" },
-                    { type: 'image', src: "tool_move.png", alt: "Інструмент переміщення" },
-                    { type: 'text', text: "Використовується для копіювання елементів (через Alt) та їх переміщення." },
-                    { type: 'text', text: "<b>Ctrl+T</b> — вмикає вільне трансформування (поворот, розтягування)." },
-                    { type: 'subheader', text: "Виділення" },
-                    { type: 'image', src: "tool_select.png", alt: "Інструменти виділення" },
-                    { type: 'text', text: "Прямокутна область, Ласо, Чарівна паличка. Використовуються для обмеження робочої області або копіювання ділянок." },
-                    { type: 'subheader', text: "Пензлі та Штамп" },
-                    { type: 'image', src: "tool_brush.png", alt: "Пензель" },
-                    { type: 'text', text: "Рекомендуємо змінити гарячу клавішу пензля на <b>A</b>. Використовуйте жорсткий круглий пензель та пензель з рваними краями." },
-                    { type: 'subheader', text: "Штамп (S)" },
-                    { type: 'image', src: "tool_stamp.png", alt: "Штамп" },
-                    { type: 'text', text: "Базовий інструмент. Затисніть Alt, щоб взяти зразок, і малюйте, щоб закрити текст або відновити фон." }
-                ]
-            },
-            {
-                id: 3,
-                role: 'cleaner',
-                title: "Скрінтони та Спідлайни",
-                category: "Елементи",
-                previewImage: "screentone_preview.png",
-                content: [
-                    { type: 'header', text: "Робота зі Скрінтонами" },
-                    { type: 'text', text: "Скрінтони — це візерунки з крапок, що створюють ілюзію сірого кольору. Головне правило: якщо скрінтон дрібний, його можна замінити градієнтом. Якщо великий — треба відновлювати візерунок." },
-                    { type: 'subheader', text: "Як відновлювати:" },
-                    {
-                        type: 'list', items: [
-                            "1. Затиснути Alt і вибрати зразок цілого скрінтону.",
-                            "2. Зміститися на потрібну відстань.",
-                            "3. Зафарбовувати, періодично відпускаючи кнопку миші."
-                        ]
-                    },
-                    { type: 'image', src: "screentone_example.png", alt: "Приклад скрінтону" },
-
-                    { type: 'header', text: "Спідлайни (Лінії руху)" },
-                    { type: 'text', text: "Лінії для передачі динаміки. Найпростіший спосіб — використовувати інструмент 'Лінія' в режимі пікселів." },
-                    { type: 'image', src: "speedlines_example.png", alt: "Спідлайни" },
-                    { type: 'text', text: "Алгоритм: Зафарбувати текст білим -> Виділити область -> Створити новий шар -> Малювати лінії інструментом Line Tool." }
-                ]
-            },
-            {
-                id: 4,
-                role: 'cleaner',
-                title: "Робота зі сканами",
-                category: "Обробка",
-                previewImage: "scans_preview.png",
-                content: [
-                    { type: 'header', text: "Підготовка сторінки (Levels)" },
-                    { type: 'text', text: "Щоб зробити чорний колір насиченим, а білий — чистим без шуму, використовуємо 'Рівні' (Levels)." },
-                    {
-                        type: 'list', items: [
-                            "1. Переведіть зображення в режим Grayscale (Градації сірого).",
-                            "2. Відкрийте Levels (Ctrl+L).",
-                            "3. Підтягніть чорний повзунок (лівий) вправо, щоб затемнити тіні.",
-                            "4. Підтягніть білий повзунок (правий) вліво, щоб прибрати 'бруд' на папері."
-                        ]
-                    },
-                    { type: 'image', src: "levels_settings.png", alt: "Налаштування рівнів" }
-                ]
-            },
-            {
-                id: 5,
-                role: 'cleaner',
-                title: "Операції (Actions)",
-                category: "Автоматизація",
-                previewImage: "actions_preview.png",
-                content: [
-                    { type: 'header', text: "Прискорення роботи" },
-                    { type: 'text', text: "Операції дозволяють записати послідовність дій і виконувати їх однією кнопкою (наприклад, F2)." },
-                    { type: 'subheader', text: "Корисні операції:" },
-                    {
-                        type: 'list', items: [
-                            "Bubble Mask: Швидке очищення баблу від сміття після виділення чарівною паличкою.",
-                            "Levels: Автоматичне застосування налаштувань контрасту.",
-                            "Save & Close: Збереження і закриття файлу."
-                        ]
-                    },
-                    { type: 'image', src: "actions_panel.png", alt: "Панель операцій" }
-                ]
-            },
-
-            // --- ГАЙДИ ДЛЯ ТАЙПЕРА ---
-            {
-                id: 101,
-                role: 'typer',
-                title: "Основи та Інструментарій",
-                category: "Основи",
-                previewImage: "",
-                content: [
-                    { type: 'header', text: "Основи Тайпу" },
-                    { type: 'text', text: "<b>Тайпер</b> — людина, що вносить текст на сторінки манґи. Головна ціль — зберегти читабельність та естетику оригіналу, адаптувавши її під українську мову." },
-                    { type: 'subheader', text: "Інструменти Photoshop" },
-                    {
-                        type: 'list', items: [
-                            "<b>Горизонтальний текст (T):</b> Точковий текст (один клік) використовується для звуків. Текст абзацу (виділення області) — для баблів.",
-                            "<b>Панель «Символ»:</b> Налаштування шрифту, розміру (кеглю), інтерліньяжу та кольору. Обов'язково вмикайте згладжування (Smooth/Sharp).",
-                            "<b>Панель «Абзац»:</b> Налаштування вирівнювання по центру, відступів та увімкнення автоматичних переносів."
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 102,
-                role: 'typer',
-                title: "Шрифти та Переноси",
-                category: "Робота з текстом",
-                previewImage: "",
-                content: [
-                    { type: 'header', text: "Шрифти та Розміри" },
-                    { type: 'text', text: "Скажи 'Ні' стандартним шрифтам (Arial, Times New Roman, Comic Sans). Використовуйте коміксні шрифти (напр., Wild Words, HushHush). На сторінці має бути не більше трьох різних шрифтів." },
-                    {
-                        type: 'list', items: [
-                            "Розмір (кегль) має бути стабільним (база 15-18pt). Не заповнюйте весь простір бульбашки гігантським текстом.",
-                            "Якщо в оригіналі текст жирний (bold) — українською він теж має бути жирним."
-                        ]
-                    },
-                    { type: 'subheader', text: "Переноси" },
-                    { type: 'text', text: "Намагайтеся уникати переносів, але якщо без них ніяк — увімкніть автоматичні (у панелі «Символ» має стояти українська мова). Основні правила:" },
-                    {
-                        type: 'list', items: [
-                            "Переноси робляться за складами.",
-                            "Не можна розривати 'дж', 'дз', якщо вони позначають один звук (але можна на межі префікса і кореня: під-жив-ляти).",
-                            "Апостроф і м'який знак не відокремлюються від попередньої літери (кіль-це).",
-                            "Не відривайте ініціали від прізвища (М. Т. Рильський)."
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 103,
-                role: 'typer',
-                title: "Розташування тексту в баблах",
-                category: "Верстка",
-                previewImage: "",
-                content: [
-                    { type: 'header', text: "Форма та Центрування" },
-                    { type: 'text', text: "Текст завжди має бути центровано розміщений (не по лівому чи правому краю, а по центру)." },
-                    {
-                        type: 'list', items: [
-                            "<b>Форма:</b> Форма тексту має збігатися з формою бульбашки (в еліпс — еліпс, у прямокутник — прямокутник).",
-                            "<b>Відступи:</b> Ніколи не торкайтеся кордонів бульбашки! Залишайте відстань щонайменше в одну літеру.",
-                            "<b>Центр мас:</b> Якщо хмаринка обрізана кадруванням, шукайте її геометричний «центр мас» або застосовуйте «метод площин» (площа порожнечі має бути візуально рівною з усіх боків).",
-                            "<b>Здвоєні хмарки:</b> Ніколи не пишіть суцільним текстом у двох хмарках одночасно. В кожній має бути свій текст."
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 104,
-                role: 'typer',
-                title: "Пунктуація",
-                category: "Правила мови",
-                previewImage: "",
-                content: [
-                    { type: 'header', text: "Українська пунктуація" },
-                    { type: 'text', text: "Ми робимо переклад українською мовою, тому не лишайте японські чи англійські знаки. Стирайте їх і пишіть вашим шрифтом." },
-                    {
-                        type: 'list', items: [
-                            "Увімкніть «висячу пунктуацію» (Roman Hanging Punctuation) у налаштуваннях Абзацу.",
-                            "Використовуйте символ трикрапки [...], а не три окремі крапки.",
-                            "Знак питання завжди має більший пріоритет: правильно ставити [?..] або [?!..] (не [..?] чи [!?]).",
-                            "Тире завжди виділяється пробілами з обох сторін, дефіс — ні."
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 105,
-                role: 'typer',
-                title: "Звуки та Ефекти",
-                category: "Оформлення",
-                previewImage: "",
-                content: [
-                    { type: 'header', text: "Робота зі звуками" },
-                    { type: 'text', text: "Звуки робляться точковим текстом. Для кращої видимості на фоні завжди додавайте ефект «Обведення» (Stroke) через стилі шару." },
-                    { type: 'subheader', text: "Деформація та Градієнти" },
-                    {
-                        type: 'list', items: [
-                            "<b>Деформація:</b> Натисніть Ctrl+T та виберіть іконку дуги зверху. Використовуйте режими «Дуга» або «Хвиля» для передачі руху.",
-                            "<b>Градієнт:</b> Створіть шар із градієнтом, помістіть його над текстом звуку і натисніть «Створити відсічну маску» (Clipping Mask).",
-                            "<b>Перспектива (вивіски, екрани):</b> Растеризуйте шар із текстом -> скопіюйте (Ctrl+C) -> відкрийте Фільтр «Виправлення перспективи» -> створіть сітку-площину -> вставте текст (Ctrl+V) і підженіть розмір."
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 106,
-                role: 'typer',
-                title: "Звуки та Ефекти",
-                category: "Оформлення",
-                previewImage: "",
-                content: [
-                    { type: 'header', text: "Робота зі звуками" },
-                    { type: 'text', text: "Порівняйте чистий звук та звук із накладеним ефектом:" },
-                    // ПРИКЛАД СЛАЙДЕРА
-                    {
-                        type: 'comparison',
-                        before: 'before_example.png',
-                        after: 'after_example.png'
-                    },
-                    { type: 'subheader', text: "Деформація та Градієнти" },
-                    { type: 'list', items: ["Деформація", "Градієнт", "Перспектива"] }
-                ]
-            },
-            {
-                id: 201,
-                role: 'translator',
-                title: "Тест",
-                category: "Тест",
-                previewImage: "test_preview.png",
-                content: [
-                    { type: 'header', text: "Прискорення роботи" },
-                    { type: 'text', text: "Операції дозволяють записати послідовність дій і виконувати їх однією кнопкою (наприклад, F2)." },
-                    { type: 'subheader', text: "Корисні операції:" },
-                    { type: 'image', src: "actions_panel.png", alt: "Панель операцій" }
-                ]
-            },
-            {
-                id: 301,
-                role: 'editor',
-                title: "Тест",
-                category: "Тест",
-                previewImage: "test_preview.png",
-                content: [
-                    { type: 'header', text: "Прискорення роботи" },
-                    { type: 'text', text: "Операції дозволяють записати послідовність дій і виконувати їх однією кнопкою (наприклад, F2)." },
-                    { type: 'subheader', text: "Корисні операції:" },
-                    { type: 'image', src: "actions_panel.png", alt: "Панель операцій" }
-                ]
-            },
-            {
-                id: 901,
-                role: 'test',
-                title: "Тест",
-                category: "Тест",
-                previewImage: "test_preview.png",
-                content: [
-                    { type: 'header', text: "Прискорення роботи" },
-                    { type: 'text', text: "Операції дозволяють записати послідовність дій і виконувати їх однією кнопкою (наприклад, F2)." },
-                    { type: 'subheader', text: "Корисні операції:" },
-                    { type: 'image', src: "actions_panel.png", alt: "Панель операцій" }
-                ]
-            },
-        ];
-
-        // ==========================================
-        // ЛОГІКА РОБОТИ
-        // ==========================================
-
-        const gridContainer = document.getElementById('guides-grid');
-        const staticContainer = document.getElementById('static-content');
-        const modal = document.getElementById('guide-modal');
-        const modalBody = document.getElementById('modal-body');
-        const navList = document.getElementById('role-list');
-        const pageTitle = document.getElementById('page-title');
-
-        // --- НОВА ФУНКЦІЯ ЛОГІКИ СЛАЙДЕРА (ОПТИМІЗОВАНА) ---
-        // Відповідає за логіку перетягування повзунка для порівняння двох зображень (До/Після).
-        // Використовує clip-path для коректного та плавного обрізання зображення "До".
-        function initComparisonSlider(container) {
-            const slider = container.querySelector('.comparison-slider-line');
-            const beforeImg = container.querySelector('.img-before');
-
-            const move = (e) => {
-                let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                const rect = container.getBoundingClientRect();
-                let position = ((x - rect.left) / rect.width) * 100;
-
-                // Обмежуємо повзунок рамками контейнера
-                if (position < 0) position = 0;
-                if (position > 100) position = 100;
-
-                slider.style.left = position + '%';
-                beforeImg.style.clipPath = `inset(0 ${100 - position}% 0 0)`;
-            };
-
-            const stopDrag = () => {
-                window.removeEventListener('mousemove', move);
-                window.removeEventListener('mouseup', stopDrag);
-                window.removeEventListener('touchmove', move);
-                window.removeEventListener('touchend', stopDrag);
-            };
-
-            const startDrag = (e) => {
-                e.preventDefault(); // Запобігаємо стандартному виділенню тексту/картинок
-                window.addEventListener('mousemove', move);
-                window.addEventListener('mouseup', stopDrag);
-                window.addEventListener('touchmove', move);
-                window.addEventListener('touchend', stopDrag);
-            };
-
-            slider.addEventListener('mousedown', startDrag);
-            slider.addEventListener('touchstart', startDrag, { passive: false });
+    <!-- Додатковий стиль для хрестика в меню на телефоні -->
+    <style>
+        @media (max-width: 768px) {
+            .close-menu-mobile { display: block !important; }
         }
-
-        // 1. РЕНДЕР НАВІГАЦІЇ
-        function renderNav() {
-            // ВАЖЛИВА ПРАВКА: Додаємо 'intro' вручну на початок списку
-            // А потім добираємо інші ролі з карток
-            const guidesRoles = [...new Set(guidesData.map(g => g.role))];
-            const availableRoles = ['intro', ...guidesRoles];
-
-            availableRoles.forEach(roleKey => {
-                const btn = document.createElement('div');
-                btn.className = 'nav-item';
-                btn.textContent = rolesConfig[roleKey] || roleKey;
-                btn.onclick = () => selectRole(roleKey, btn);
-                if (roleKey === 'intro') {
-                    selectRole('intro', btn);
-                }
-                navList.appendChild(btn);
-            });
-
-            // Автоматично обираємо Вступ при завантаженні
-            // Знаходимо першу кнопку (це Вступ) і клікаємо на неї
-            const firstBtn = navList.firstChild;
-            if (firstBtn) selectRole('intro', firstBtn);
-        }
-
-        // 2. ВИБІР РОЛІ (Функція перемикання)
-        function selectRole(roleKey, btnElement) {
-            // Оновлюємо заголовок (для Intro ховаємо його)
-            if (roleKey === 'intro') {
-                pageTitle.style.display = 'none';
-            } else {
-                pageTitle.style.display = 'block';
-                pageTitle.textContent = rolesConfig[roleKey];
-            }
-
-            // Підсвітка кнопок
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            if (btnElement) btnElement.classList.add('active');
-            else {
-                // Якщо функція викликана не кліком, а автоматично
-                const btns = document.querySelectorAll('.nav-item');
-                btns.forEach(b => {
-                    if (b.textContent === rolesConfig[roleKey]) b.classList.add('active');
-                });
-            }
-
-            // ПЕРЕМИКАННЯ РЕЖИМІВ
-            if (roleKey === 'intro') {
-                // Ховаємо сітку, показуємо текст
-                gridContainer.classList.add('hidden');
-                staticContainer.classList.remove('hidden');
-
-                // Малюємо Вступ
-                renderContent(staticContainer, introContentData);
-
-            } else {
-                // Ховаємо текст, показуємо сітку
-                staticContainer.classList.add('hidden');
-                gridContainer.classList.remove('hidden');
-
-                const roleGuides = guidesData.filter(g => g.role === roleKey);
-                renderGrid(roleGuides);
-            }
-        }
-
-        // 3. РЕНДЕР СІТКИ КАРТОК
-        function renderGrid(guides) {
-            gridContainer.innerHTML = '';
-
-            guides.forEach(guide => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.onclick = () => openGuide(guide);
-
-                const imgHtml = guide.previewImage
-                    ? `<img src="${guide.previewImage}" alt="${guide.title}" onerror="this.style.display='none'">`
-                    : `<div class="card-placeholder"></div>`;
-
-                card.innerHTML = `
-                        <div class="card-image">
-                            ${imgHtml}
-                        </div>
-                        <div class="card-content">
-                            <h3 class="card-title">${guide.title}</h3>
-                            <span class="card-tag">${guide.category}</span>
-                        </div>
-                    `;
-                gridContainer.appendChild(card);
-            });
-        }
-
-        // 4. УНІВЕРСАЛЬНА ФУНКЦІЯ ДЛЯ КОНТЕНТУ
-        // Малює блоки тексту і в модалці, і у вступі
-        function renderContent(container, contentArray) {
-            container.innerHTML = '';
-            contentArray.forEach(block => {
-                let element;
-                if (block.type === 'header') {
-                    element = document.createElement('h1'); element.textContent = block.text;
-                } else if (block.type === 'subheader') {
-                    element = document.createElement('h2'); element.textContent = block.text;
-                } else if (block.type === 'text') {
-                    element = document.createElement('p'); element.innerHTML = block.text;
-                } else if (block.type === 'info') {
-                    element = document.createElement('div'); element.className = 'info-box'; element.textContent = block.text;
-                } else if (block.type === 'list') {
-                    element = document.createElement('ul');
-                    block.items.forEach(item => { const li = document.createElement('li'); li.innerHTML = item; element.appendChild(li); });
-                } else if (block.type === 'image') {
-                    element = document.createElement('img'); element.src = block.src; element.className = 'guide-img';
-                    element.onerror = function() { this.src = "https://placehold.co/600x300?text=Зображення"; };
-                }
-                // НОВИЙ ТИП: COMPARISON (Оновлено для роботи з clipPath зі скрипта бети)
-                // Створює HTML структуру для повзунка порівняння зображень та ініціалізує його
-                else if (block.type === 'comparison') {
-                    const wrap = document.createElement('div');
-                    wrap.className = 'comparison-container';
-                    wrap.innerHTML = `
-                            <img src="${block.after}" class="comparison-img img-after">
-                            <img src="${block.before}" class="comparison-img img-before">
-                            <div class="comparison-slider-line"></div>
-                        `;
-                    element = wrap;
-                    // Затримка потрібна для того, щоб DOM встиг оновитися до ініціалізації подій
-                    setTimeout(() => initComparisonSlider(wrap), 100);
-                }
-
-                if (element) container.appendChild(element);
-            });
-        }
-
-        // 5. ВІДКРИТТЯ МОДАЛКИ (Гайд)
-        function openGuide(guide) {
-            renderContent(modalBody, guide.content);
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        // Закриття по кліку на фон
-        modal.onclick = (e) => {
-            if (e.target === modal) closeModal();
-        }
-
-        // ЗАПУСК
-        renderNav();
-
-    </script>
+    </style>
 </body>
 </html>
