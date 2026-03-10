@@ -1,3 +1,4 @@
+<!-- педалос тім хаб ver. 1.2 -->
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -17,27 +18,41 @@
     <div class="app-container">
         <!-- Ліва панель -->
         <aside class="sidebar">
-<div class="sidebar-header">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>Pedalos Team</h2>
-        <!-- Кнопка перемикання теми -->
-        <button id="theme-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="Змінити тему">
-            🌙
-        </button>
-    </div>
-    
-    <!-- Кнопка закриття меню (тільки для мобільних) -->
-    <button class="close-menu-mobile" onclick="toggleMobileMenu(false)" style="float:right; background:none; border:none; color:var(--text-main); font-size:1.5rem; display:none;">✕</button>
-</div>
+            <div class="sidebar-header">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Pedalos Team</h2>
+                    <button id="theme-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="Змінити тему">🌙</button>
+                </div>
+                <button class="close-menu-mobile" onclick="toggleMobileMenu(false)" style="float:right; background:none; border:none; color:var(--text-main); font-size:1.5rem; display:none;">✕</button>
+            </div>
             <nav id="role-list" class="nav-list"></nav>
         </aside>
 
         <!-- Головна область -->
         <main class="main-content">
-            <header class="top-bar">
+            <!-- Заголовок сторінки -->
+            <div class="page-header" id="page-header">
                 <h1 id="page-title">Оберіть мануал зліва</h1>
-            </header>
+                <p id="page-description" class="page-desc hidden"></p>
+            </div>
 
+            <!-- Головний банер (Featured) -->
+            <div class="featured-banner hidden" id="featured-banner">
+                <img id="banner-char" class="banner-char" src="" alt="Character">
+
+                <div class="featured-content-card">
+                    <div class="featured-inner-content">
+                        <div class="featured-text">
+                            <h2 id="featured-title"></h2>
+                            <div id="featured-text-content"></div>
+                        </div>
+
+                        <div class="featured-visual" id="featured-visual"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Сітка карток та статичний контент -->
             <div id="guides-grid" class="cards-grid"></div>
             <div id="static-content" class="static-page hidden"></div>
         </main>
@@ -55,10 +70,11 @@
     <script src="js/data.js"></script>
     <script src="js/script.js"></script>
 
-    <!-- Додатковий стиль для хрестика в меню на телефоні -->
     <style>
         @media (max-width: 768px) {
-            .close-menu-mobile { display: block !important; }
+            .close-menu-mobile {
+                display: block !important;
+            }
         }
     </style>
 </body>
