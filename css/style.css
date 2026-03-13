@@ -24,6 +24,13 @@ body.light-theme {
     --accent: #4752c4;
 }
 
+    /* ЗАПОБІЖНИК: Скасовує жорстко прописаний білий колір в HTML-тегах data.js для світлої теми */
+    body.light-theme *[style*="color: rgb(255, 255, 255)"],
+    body.light-theme *[style*="color: #ffffff"],
+    body.light-theme font[color="#ffffff"] {
+        color: var(--text-heading) !important;
+    }
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -44,6 +51,19 @@ body {
     display: flex;
     width: 100%;
     height: 100%;
+}
+
+/* --- Спільна анімація появи контенту --- */
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* --- SIDEBAR --- */
@@ -91,14 +111,30 @@ body {
 
     .nav-item.active {
         background: rgba(88, 101, 242, 0.15);
-        color: #ffffff;
+        color: var(--accent); /* Колір адаптовано для читабельності в обох темах */
         border-left: 3px solid var(--accent);
+        font-weight: bold;
     }
 
+/* Повертаємо білий колір лише для темної теми */
+body:not(.light-theme) .nav-item.active {
+    color: #ffffff;
+}
+
+/* Анімація підменю */
 .sub-nav-list {
     margin-left: 12px;
+    max-height: 0;
     overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.4s ease;
 }
+
+    .sub-nav-list.open {
+        max-height: 500px;
+        opacity: 1;
+        margin-bottom: 10px;
+    }
 
 .sub-item {
     font-size: 0.9rem;
@@ -132,6 +168,7 @@ body {
     flex-grow: 1;
     padding: 40px;
     overflow-y: auto;
+    /* Анімація буде перезапускатись через JS */
 }
 
 .page-header {
@@ -171,7 +208,7 @@ body {
     width: 100%;
     background: var(--bg-banner);
     border-radius: 16px;
-    height: 240px;
+    min-height: 240px;
     display: flex;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, black 18%, black 92%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 18%, black 92%, transparent 100%);
@@ -181,7 +218,7 @@ body {
 .banner-char {
     position: absolute;
     left: 20px;
-    bottom: 0; /* Виправлено: тепер персонаж не вилазить за межі знизу */
+    bottom: 0;
     height: 320px;
     z-index: 10;
     object-fit: contain;
@@ -307,6 +344,7 @@ body {
 
 .guide-card {
     display: flex;
+    flex-direction: column;
     align-items: stretch;
     background: var(--bg-card);
     border-radius: var(--radius);
@@ -314,20 +352,29 @@ body {
     cursor: pointer;
     transition: 0.2s;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    height: 90px;
+    min-height: 90px;
 }
 
-    /* Ховер для карток: Темна тема (яскраве синє світіння) */
     .guide-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(88, 101, 242, 0.25); /* Синє світіння */
-        border-color: rgba(88, 101, 242, 0.8); /* Яскравий синій бордер */
+        box-shadow: 0 8px 20px rgba(88, 101, 242, 0.25);
+        border-color: rgba(88, 101, 242, 0.8);
     }
 
-/* Ховер для карток: Світла тема (залишаємо старий варіант) */
 body.light-theme .guide-card:hover {
-    box-shadow: 0 8px 15px rgba(0,0,0,0.2); /* Звичайна тінь */
-    border-color: rgba(88, 101, 242, 0.3); /* Тьмяний бордер */
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    border-color: rgba(88, 101, 242, 0.3);
+}
+
+.card-preview {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
+.card-content-wrap {
+    display: flex;
+    flex: 1;
 }
 
 .card-accent-block {
@@ -507,6 +554,24 @@ body.light-theme .guide-card:hover {
             left: 0;
         }
 
+    .sidebar-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+        .sidebar-header > div {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+    .close-menu-mobile {
+        display: block !important;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+
     .main-content {
         padding: 70px 15px 20px;
     }
@@ -514,15 +579,23 @@ body.light-theme .guide-card:hover {
     .page-header.with-banner {
         margin-left: 0;
     }
-
     .featured-content-card {
-        -webkit-mask-image: none;
-        mask-image: none;
+        position: relative;
+        width: 100%;
+        background: var(--bg-banner);
+        border-radius: 16px;
+        min-height: 240px;
+        display: flex;
+        /* РОЗМИВАЄМО САМУ ПЛАШКУ: лівий край повністю прозорий під персонажем, плавно переходить у сірий ближче до тексту */
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 15%, black 40%, black 100%);
+        mask-image: linear-gradient(to right, transparent 0%, transparent 15%, black 40%, black 100%);
     }
 
     .featured-inner-content {
         padding: 20px;
         flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
     }
 
     .banner-char {
@@ -532,4 +605,75 @@ body.light-theme .guide-card:hover {
     .featured-visual {
         width: 100%;
     }
+}
+/* --- Покращені анімації модального вікна (відкриття та закриття) --- */
+
+/* 1. Анімації для фону (Fade) */
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOutOverlay {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* 2. Анімації для самого вікна (Pop/Scale) */
+/* Відкриття: збільшується з легким відскоком */
+@keyframes popInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+/* --- Покращені анімації модального вікна (відкриття та закриття) --- */
+
+/* 1. Анімації для фону (Fade) */
+@keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOutOverlay { from { opacity: 1; } to { opacity: 0; } }
+
+/* 2. Анімації для самого вікна (Pop/Scale) */
+/* Відкриття: збільшується з легким відскоком */
+@keyframes popInModal {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+/* Закриття: плавно здувається і падає вниз */
+@keyframes popOutModal {
+    from { opacity: 1; transform: scale(1) translateY(0); }
+    to { opacity: 0; transform: scale(0.9) translateY(15px); }
+}
+
+/* --- СТИЛІ ВІДКРИТТЯ (коли hidden немає) --- */
+.modal-overlay:not(.hidden) {
+    animation: fadeInOverlay 0.3s ease-out forwards;
+}
+
+.modal-overlay:not(.hidden) .modal-window {
+    animation: popInModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* --- СТИЛІ ЗАКРИТТЯ (спеціальний клас, який додає JS перед закриттям) --- */
+.modal-overlay.is-closing {
+    animation: fadeOutOverlay 0.3s ease-in forwards;
+}
+
+.modal-overlay.is-closing .modal-window {
+    animation: popOutModal 0.3s ease-in forwards;
 }

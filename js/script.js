@@ -4,7 +4,7 @@ const staticContainer = document.getElementById('static-content');
 const modal = document.getElementById('guide-modal');
 const modalBody = document.getElementById('modal-body');
 const navList = document.getElementById('role-list');
-const sidebar = document.querySelector('.sidebar'); 
+const sidebar = document.querySelector('.sidebar');
 
 // Елементи заголовка та банера
 const pageHeader = document.getElementById('page-header');
@@ -17,32 +17,75 @@ const featuredTitle = document.getElementById('featured-title');
 const featuredTextContent = document.getElementById('featured-text-content');
 const featuredVisual = document.getElementById('featured-visual');
 
+// === СЕКРЕТНИЙ РЕЖИМ РЕДАГУВАННЯ ===
+const EDIT_MODE = false;
+
+if (EDIT_MODE) {
+    const exportBtn = document.createElement('button');
+    exportBtn.innerHTML = '💾 Скопіювати Data.js';
+    exportBtn.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:9999; padding:15px 25px; background:var(--accent); color:#fff; border:none; border-radius:12px; cursor:pointer; font-size: 1.1rem; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition: 0.2s;';
+
+    exportBtn.onmouseover = () => exportBtn.style.transform = 'translateY(-3px)';
+    exportBtn.onmouseout = () => exportBtn.style.transform = 'translateY(0)';
+
+    exportBtn.onclick = () => {
+        const output = `// Конфігурація ролей
+const rolesConfig = ${JSON.stringify(rolesConfig, null, 4)};
+
+// Текст Вступу
+const introContentData = ${JSON.stringify(introContentData, null, 4)};
+
+// Масив Гайдів
+const guidesData = ${JSON.stringify(guidesData, null, 4)};`;
+
+        navigator.clipboard.writeText(output).then(() => {
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '✅ Скопійовано!';
+            exportBtn.style.background = '#23a559';
+            setTimeout(() => {
+                exportBtn.innerHTML = originalText;
+                exportBtn.style.background = 'var(--accent)';
+            }, 2500);
+        }).catch(err => alert('Помилка копіювання: ' + err));
+    };
+    document.body.appendChild(exportBtn);
+}
+
+function bindEdit(element, dataObj, key) {
+    element.contentEditable = true;
+    element.style.outline = '2px dashed rgba(88, 101, 242, 0.6)';
+    element.style.outlineOffset = '4px';
+    element.style.borderRadius = '4px';
+    element.onblur = () => dataObj[key] = element.innerHTML;
+}
+// ===================================
+
 // 1. РЕНДЕР НАВІГАЦІЇ
 function renderNav() {
     navList.innerHTML = '';
 
-    for (const[roleKey, roleData] of Object.entries(rolesConfig)) {
+    for (const [roleKey, roleData] of Object.entries(rolesConfig)) {
         const btn = document.createElement('div');
         btn.className = 'nav-item';
         btn.textContent = roleData.title;
-        
+
         if (roleData.subroles) {
             btn.classList.add('has-sub');
             const subContainer = document.createElement('div');
-            subContainer.className = 'sub-nav-list hidden';
-            
+            subContainer.className = 'sub-nav-list';
+
             btn.onclick = () => {
-                subContainer.classList.toggle('hidden');
+                subContainer.classList.toggle('open');
                 btn.classList.toggle('active-parent');
             };
 
-            for (const[subKey, subData] of Object.entries(roleData.subroles)) {
+            for (const [subKey, subData] of Object.entries(roleData.subroles)) {
                 const subBtn = document.createElement('div');
                 subBtn.className = 'nav-item sub-item';
                 subBtn.textContent = subData.title;
-                
+
                 subBtn.onclick = (e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     selectRole(subKey, subBtn, subData.title, subData.desc);
                     toggleMobileMenu(false);
                 };
@@ -59,7 +102,6 @@ function renderNav() {
         }
     }
 
-    // Автоматично відкриваємо Вступ при завантаженні
     const firstBtn = navList.querySelector('.nav-item');
     if (firstBtn) {
         selectRole('intro', firstBtn, rolesConfig['intro'].title, rolesConfig['intro'].desc);
@@ -68,18 +110,18 @@ function renderNav() {
 
 // 2. ВИБІР РОЛІ ТА ОНОВЛЕННЯ КОНТЕНТУ
 function selectRole(roleKey, element, title, desc) {
-    // Підсвітка активного пункту
     document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-    if(element) element.classList.add('active');
+    if (element) element.classList.add('active');
 
     if (roleKey === 'intro') {
         pageHeader.classList.add('hidden');
         featuredBanner.classList.add('hidden');
         gridContainer.classList.add('hidden');
         staticContainer.classList.remove('hidden');
-        
+
         renderContent(staticContainer, introContentData);
-        return; 
+        triggerMainAnimation();
+        return;
     }
 
     pageHeader.classList.remove('hidden');
@@ -88,10 +130,9 @@ function selectRole(roleKey, element, title, desc) {
 
     pageTitle.textContent = title;
     pageDescription.textContent = desc || '';
-    if(desc) pageDescription.classList.remove('hidden');
+    if (desc) pageDescription.classList.remove('hidden');
     else pageDescription.classList.add('hidden');
-    
-    // Шукаємо дані для банера (featured)
+
     let featuredData = null;
     if (rolesConfig[roleKey]?.featured) {
         featuredData = rolesConfig[roleKey].featured;
@@ -104,13 +145,22 @@ function selectRole(roleKey, element, title, desc) {
         }
     }
 
-    // Якщо є банер - рендеримо його і зсуваємо заголовок
     if (featuredData) {
-        pageHeader.classList.add('with-banner'); 
+        pageHeader.classList.add('with-banner');
         bannerChar.src = featuredData.charImg;
-        featuredTitle.textContent = featuredData.title;
+        featuredTitle.innerHTML = featuredData.title;
         featuredTextContent.innerHTML = featuredData.text;
-        
+
+        if (EDIT_MODE) {
+            bindEdit(featuredTitle, featuredData, 'title');
+            bindEdit(featuredTextContent, featuredData, 'text');
+        } else {
+            featuredTitle.contentEditable = false;
+            featuredTextContent.contentEditable = false;
+            featuredTitle.style.outline = 'none';
+            featuredTextContent.style.outline = 'none';
+        }
+
         featuredVisual.innerHTML = '';
         if (featuredData.visual?.type === 'comparison') {
             const compEl = document.createElement('div');
@@ -128,11 +178,20 @@ function selectRole(roleKey, element, title, desc) {
         }
         featuredBanner.classList.remove('hidden');
     } else {
-        pageHeader.classList.remove('with-banner'); 
+        pageHeader.classList.remove('with-banner');
         featuredBanner.classList.add('hidden');
     }
 
     filterGuides(roleKey);
+    triggerMainAnimation();
+}
+
+// Анімація контенту при зміні ролі
+function triggerMainAnimation() {
+    const mainContent = document.querySelector('.main-content');
+    mainContent.style.animation = 'none';
+    void mainContent.offsetHeight; // Рефлоу: примусово перезапускає анімацію
+    mainContent.style.animation = 'fadeInSlide 0.4s ease-out forwards';
 }
 
 // 3. ФУНКЦІЯ СЛАЙДЕРА ПОРІВНЯННЯ
@@ -146,16 +205,16 @@ function initComparisonSlider(container) {
 
     const updateSlider = (e) => {
         if (!isDragging) return;
-        
+
         const event = e.touches ? e.touches[0] : e;
         const rect = slider.getBoundingClientRect();
         let x = event.clientX - rect.left;
-        
+
         if (x < 0) x = 0;
         if (x > rect.width) x = rect.width;
-        
+
         const percentage = (x / rect.width) * 100;
-        
+
         beforeImg.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
         line.style.left = `${percentage}%`;
         button.style.left = `${percentage}%`;
@@ -175,9 +234,10 @@ function filterGuides(roleKey) {
     renderGuides(filtered);
 }
 
+// ВИПРАВЛЕНА ФУНКЦІЯ
 function renderGuides(guides) {
     gridContainer.innerHTML = '';
-    
+
     if (guides.length === 0) {
         gridContainer.innerHTML = '<p style="color:var(--text-muted); padding: 20px;">У цьому розділі поки немає окремих гайдів.</p>';
         return;
@@ -186,12 +246,21 @@ function renderGuides(guides) {
     guides.forEach(guide => {
         const card = document.createElement('div');
         card.className = 'guide-card';
-        card.innerHTML = `
-            <div class="card-accent-block"></div>
-            <div class="card-info">
-                <div class="card-category">${guide.category || 'Мануал'}</div>
-                <h3 class="card-title">${guide.title}</h3>
-                <div class="card-read-more">Читати далі →</div>
+
+        // Створюємо картинку окремо, щоб уникнути помилок синтаксису
+        let imageHtml = '';
+        if (guide.previewImage) {
+            imageHtml = `<img src="${guide.previewImage}" alt="${guide.title}" class="card-preview">`;
+        }
+
+        card.innerHTML = imageHtml + `
+            <div class="card-content-wrap">
+                <div class="card-accent-block"></div>
+                <div class="card-info">
+                    <div class="card-category">${guide.category || 'Мануал'}</div>
+                    <h3 class="card-title">${guide.title}</h3>
+                    <div class="card-read-more">Читати далі →</div>
+                </div>
             </div>
         `;
         card.onclick = () => openModal(guide);
@@ -199,7 +268,7 @@ function renderGuides(guides) {
     });
 }
 
-// 5. РЕНДЕР КОНТЕНТУ (Для вступу та модалки)
+// 5. РЕНДЕР КОНТЕНТУ
 function renderContent(container, contentArray) {
     container.innerHTML = '';
     contentArray.forEach(item => {
@@ -207,26 +276,35 @@ function renderContent(container, contentArray) {
         switch (item.type) {
             case 'header':
                 el = document.createElement('h1');
-                el.textContent = item.text;
+                el.innerHTML = item.text;
+                if (EDIT_MODE) bindEdit(el, item, 'text');
                 break;
             case 'subheader':
                 el = document.createElement('h2');
-                el.textContent = item.text;
+                el.innerHTML = item.text;
+                if (EDIT_MODE) bindEdit(el, item, 'text');
                 break;
             case 'text':
                 el = document.createElement('p');
                 el.innerHTML = item.text;
+                if (EDIT_MODE) bindEdit(el, item, 'text');
                 break;
             case 'info':
                 el = document.createElement('div');
                 el.className = 'info-block';
                 el.innerHTML = item.text;
+                if (EDIT_MODE) bindEdit(el, item, 'text');
                 break;
             case 'list':
                 el = document.createElement('ul');
-                item.items.forEach(text => {
+                item.items.forEach((text, i) => {
                     const li = document.createElement('li');
                     li.innerHTML = text;
+                    if (EDIT_MODE) {
+                        li.contentEditable = true;
+                        li.style.outline = '2px dashed rgba(88, 101, 242, 0.6)';
+                        li.onblur = () => item.items[i] = li.innerHTML;
+                    }
                     el.appendChild(li);
                 });
                 break;
@@ -257,14 +335,37 @@ function renderContent(container, contentArray) {
 
 // 6. МОДАЛЬНЕ ВІКНО ТА ТЕМА
 function openModal(guide) {
-    renderContent(modalBody,[{ type: 'header', text: guide.title }, ...guide.content]);
+    renderContent(modalBody, [{ type: 'header', text: guide.title }, ...guide.content]);
+
+    if (EDIT_MODE) {
+        const h1 = modalBody.querySelector('h1');
+        if (h1) h1.onblur = () => guide.title = h1.innerHTML;
+    }
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-    modal.classList.add('hidden');
-    document.body.style.overflow = 'auto';
+    // 1. Спочатку додаємо спеціальний клас закриття, який запустить CSS-анімацію
+    modal.classList.add('is-closing');
+
+    // 2. Чекаємо 300мс (0.3с), поки програється анімація закриття
+    setTimeout(() => {
+        // 3. Лише після затримки повністю ховаємо вікно
+        modal.classList.add('hidden');
+        // 4. І прибираємо клас закриття, щоб наступного разу все спрацювало знову
+        modal.classList.remove('is-closing');
+
+        // Повертаємо прокрутку сторінки
+        document.body.style.overflow = 'auto';
+
+        // Логіка для режиму редагування (якщо є)
+        if (typeof EDIT_MODE !== 'undefined' && EDIT_MODE) {
+            const activeItem = document.querySelector('.nav-item.active');
+            if (activeItem) activeItem.click();
+        }
+    }, 300); // Час затримки має збігатися з часом анімації в CSS (0.3s)
 }
 
 function toggleMobileMenu(forceState) {

@@ -1,4 +1,4 @@
-<!-- педалос тім хаб ver. 1.2 -->
+<!-- педалос тім хаб ver. 1.3 -->
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -20,7 +20,7 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2>Pedalos Team</h2>
+                    <h2 onclick="window.location.href='index.html'" style="cursor: pointer;" title="На головну">Pedalos Team</h2>
                     <button id="theme-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="Змінити тему">🌙</button>
                 </div>
                 <button class="close-menu-mobile" onclick="toggleMobileMenu(false)" style="float:right; background:none; border:none; color:var(--text-main); font-size:1.5rem; display:none;">✕</button>
@@ -72,9 +72,43 @@
 
     <style>
         @media (max-width: 768px) {
+            .sidebar-header {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+                .sidebar-header > div {
+                    width: 100%;
+                    margin-bottom: 10px;
+                }
+
             .close-menu-mobile {
                 display: block !important;
+                position: absolute;
+                top: 15px;
+                right: 15px;
             }
+        }
+
+        /* --- Анімація переходу між підролями --- */
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Застосовуємо анімацію до карток, вмісту статичних сторінок та банера */
+        #guides-grid > *,
+        #static-content > *,
+        .featured-banner:not(.hidden) {
+            animation: fadeInSlide 0.4s ease-out forwards;
         }
     </style>
 </body>
