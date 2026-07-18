@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PedalosKopi1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-start justify-center min-h-screen font-sans text-gray-800 py-10">
+
+    <div class="bg-white w-full max-w-6xl rounded-xl shadow-lg p-8">
+        <!-- Шапка -->
+        <div class="flex items-center gap-3 border-b pb-4 mb-6">
+            <div class="text-blue-500 text-3xl">✨</div>
+            <div>
+                <h1 class="text-2xl font-bold">PedalosKopi1.0</h1>
+                <p class="text-sm text-gray-500">Найкраща пусторозробка нашої пустолабораторії</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 mb-8">
+            <!-- Зона завантаження -->
+            <div>
+                <h2 class="font-semibold mb-3">Завантажити сторінки (до 40)</h2>
+                <div id="dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-blue-50 transition cursor-pointer flex flex-col items-center justify-center h-48">
+                    <svg class="w-8 h-8 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <p class="text-blue-600 font-medium mb-1">Натисніть, щоб завантажити <span class="text-gray-500 font-normal">або перетягніть</span></p>
+                    <p class="text-xs text-gray-400">PNG, JPG, WEBP (МАКС. 5МБ, до 40 файлів)</p>
+                    <input type="file" id="fileInput" multiple accept=".png, .jpg, .jpeg, .webp" class="hidden">
+                </div>
+                <div id="fileList" class="mt-2 text-sm text-gray-600 font-medium">Вибрано файлів: 0</div>
+            </div>
+
+            <!-- Налаштування -->
+            <div>
+                <h2 class="font-semibold mb-3">Режим читання</h2>
+                <div class="bg-gray-50 p-4 rounded-lg flex gap-6 mb-4 border border-gray-200">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mode" value="manga" checked class="w-4 h-4 text-blue-600">
+                        Манґа (Справа наліво)
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="mode" value="manhwa" class="w-4 h-4 text-blue-600">
+                        Манхва (Зліва направо)
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    Для манхви: довгі сторінки (висотою більше 1600px) будуть автоматично розділені на частини для кращої обробки. Кожна частина буде оброблена окремо.
+                </p>
+            </div>
+        </div>
+
+        <button id="submitBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+            Видобути текст (0 файлів)
+        </button>
+        
+        <div id="resultsContainer" class="mt-8 flex flex-col gap-4"></div>
+
+        <div class="text-center text-xs text-gray-400 mt-12">
+            © 2026 PedalosKopi
+        </div>
+    </div>
+
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const fileList = document.getElementById('fileList');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        let selectedFiles = [];
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('bg-blue-50', 'border-blue-300'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('bg-blue-50', 'border-blue-300'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('bg-blue-50', 'border-blue-300');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files).slice(0, 40);
+            submitBtn.textContent = `Видобути текст (${selectedFiles.length} файлів)`;
+            fileList.textContent = `Вибрано файлів: ${selectedFiles.length}`;
+        }
+
+        function createCardHTML(id, filename, imageUrl) {
+            return `
+            <div id="card-${id}" class="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+                <div class="flex items-center justify-between p-3 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition" onclick="toggleCard('${id}')">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        <span class="font-medium text-sm text-gray-700">${filename}</span>
+                        <span id="badge-${id}" class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 flex items-center gap-1">
+                            <svg class="animate-spin w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Обробка...
+                        </span>
+                    </div>
+                    <svg id="chevron-${id}" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                
+                <div id="body-${id}" class="p-4 block">
+                    <div id="loading-${id}" class="flex flex-col items-center justify-center py-10">
+                        <svg class="animate-spin w-10 h-10 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <p class="text-sm text-gray-500">Видобуваємо текст...</p>
+                    </div>
+
+                    <div id="error-${id}" class="hidden bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm"></div>
+
+                    <!-- Оновлений Успішний результат (Дві колонки) -->
+                    <div id="success-${id}" class="hidden grid grid-cols-2 gap-4 mt-2">
+                        <div class="border border-gray-200 rounded-lg p-3 bg-gray-50 flex flex-col">
+                            <p class="text-sm font-semibold mb-2 text-gray-600">Перегляд зображення</p>
+                            <div class="flex-1 flex items-center justify-center bg-white rounded border border-gray-200 overflow-hidden p-2">
+                                <img src="${imageUrl}" class="max-h-[400px] object-contain w-full">
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col">
+                            <p class="text-sm font-semibold mb-2 text-gray-600">Розпізнаний текст</p>
+                            <textarea id="text-${id}" class="w-full h-full min-h-[400px] p-3 border border-gray-300 rounded-lg bg-white text-sm focus:ring-blue-500 focus:border-blue-500 resize-none shadow-sm" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        window.toggleCard = function(id) {
+            const body = document.getElementById(`body-${id}`);
+            const chevron = document.getElementById(`chevron-${id}`);
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                body.classList.add('block');
+                chevron.classList.remove('rotate-180');
+            } else {
+                body.classList.remove('block');
+                body.classList.add('hidden');
+                chevron.classList.add('rotate-180');
+            }
+        }
+
+        submitBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return alert('Оберіть файли!');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Обробка розпочата...';
+            resultsContainer.innerHTML = ''; 
+            
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+
+            selectedFiles.forEach((file, index) => {
+                const imageUrl = URL.createObjectURL(file);
+                resultsContainer.insertAdjacentHTML('beforeend', createCardHTML(index, file.name, imageUrl));
+            });
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('mode', mode);
+
+                try {
+                    // УВАГА: ЗАМІНИ ЦЕ ПОСИЛАННЯ НА ТЕ, ЩО ДАСТЬ ТОБІ RENDER!
+                    const response = await fetch('https://postokopi-bekend.onrender.com/process_single', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    document.getElementById(`loading-${i}`).classList.add('hidden');
+                    const badge = document.getElementById(`badge-${i}`);
+
+                    if (data.success) {
+                        document.getElementById(`success-${i}`).classList.remove('hidden');
+                        document.getElementById(`text-${i}`).value = data.text;
+                        badge.className = "px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700";
+                        badge.textContent = "Готово";
+                    } else {
+                        throw new Error(data.error || "Невідома помилка на сервері");
+                    }
+                } catch (error) {
+                    document.getElementById(`loading-${i}`).classList.add('hidden');
+                    const errorBox = document.getElementById(`error-${i}`);
+                    const badge = document.getElementById(`badge-${i}`);
+                    
+                    errorBox.classList.remove('hidden');
+                    errorBox.innerHTML = `<strong>Помилка видобування:</strong> ${error.message}`;
+                    
+                    badge.className = "px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700";
+                    badge.textContent = "Помилка";
+                }
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = `Видобути текст (${selectedFiles.length} файлів)`;
+        });
+    </script>
+</body>
+</html>

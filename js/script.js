@@ -186,11 +186,10 @@ function selectRole(roleKey, element, title, desc) {
     triggerMainAnimation();
 }
 
-// Анімація контенту при зміні ролі
 function triggerMainAnimation() {
     const mainContent = document.querySelector('.main-content');
     mainContent.style.animation = 'none';
-    void mainContent.offsetHeight; // Рефлоу: примусово перезапускає анімацію
+    void mainContent.offsetHeight;
     mainContent.style.animation = 'fadeInSlide 0.4s ease-out forwards';
 }
 
@@ -234,7 +233,6 @@ function filterGuides(roleKey) {
     renderGuides(filtered);
 }
 
-// ВИПРАВЛЕНА ФУНКЦІЯ
 function renderGuides(guides) {
     gridContainer.innerHTML = '';
 
@@ -247,7 +245,6 @@ function renderGuides(guides) {
         const card = document.createElement('div');
         card.className = 'guide-card';
 
-        // Створюємо картинку окремо, щоб уникнути помилок синтаксису
         let imageHtml = '';
         if (guide.previewImage) {
             imageHtml = `<img src="${guide.previewImage}" alt="${guide.title}" class="card-preview">`;
@@ -333,8 +330,15 @@ function renderContent(container, contentArray) {
     });
 }
 
-// 6. МОДАЛЬНЕ ВІКНО ТА ТЕМА
+// 6. МОДАЛЬНЕ ВІКНО ТА ВОРКСПЕЙС
 function openModal(guide) {
+    // ЯКЩО Є ПРАПОРЕЦЬ ВОРКСПЕЙСУ -> ВІДКРИВАЄМО ОСТРІВЕЦЬ
+    if (guide.workspaceTool) {
+        openWorkspace(guide);
+        return;
+    }
+
+    // Інакше відкриваємо стандартне вікно посередині
     renderContent(modalBody, [{ type: 'header', text: guide.title }, ...guide.content]);
 
     if (EDIT_MODE) {
@@ -347,26 +351,51 @@ function openModal(guide) {
 }
 
 function closeModal() {
-    // 1. Спочатку додаємо спеціальний клас закриття, який запустить CSS-анімацію
     modal.classList.add('is-closing');
-
-    // 2. Чекаємо 300мс (0.3с), поки програється анімація закриття
     setTimeout(() => {
-        // 3. Лише після затримки повністю ховаємо вікно
         modal.classList.add('hidden');
-        // 4. І прибираємо клас закриття, щоб наступного разу все спрацювало знову
         modal.classList.remove('is-closing');
-
-        // Повертаємо прокрутку сторінки
         document.body.style.overflow = 'auto';
 
-        // Логіка для режиму редагування (якщо є)
         if (typeof EDIT_MODE !== 'undefined' && EDIT_MODE) {
             const activeItem = document.querySelector('.nav-item.active');
             if (activeItem) activeItem.click();
         }
-    }, 300); // Час затримки має збігатися з часом анімації в CSS (0.3s)
+    }, 300);
 }
+
+// --- НОВІ ФУНКЦІЇ ДЛЯ ОСТРІВЦЯ (WORKSPACE) ---
+function openWorkspace(guide) {
+    const workspaceModal = document.getElementById('workspace-modal');
+    const workspaceBody = document.getElementById('workspace-content-body');
+    const iframe = document.getElementById('workspace-iframe');
+
+    // Очищаємо та рендеримо контент мануалу зліва
+    workspaceBody.innerHTML = '';
+    renderContent(workspaceBody, [{ type: 'header', text: guide.title }, ...guide.content]);
+
+    // Завантажуємо інструмент справа
+    iframe.src = guide.workspaceTool;
+
+    // Показуємо острівець
+    workspaceModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Розгортаємо бокову панель за замовчуванням
+    document.getElementById('workspace-sidebar').classList.remove('collapsed');
+}
+
+function closeWorkspace() {
+    const workspaceModal = document.getElementById('workspace-modal');
+    workspaceModal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    document.getElementById('workspace-iframe').src = ''; // Відключаємо iframe, щоб не їв ресурси
+}
+
+function toggleWorkspaceSidebar() {
+    document.getElementById('workspace-sidebar').classList.toggle('collapsed');
+}
+// ----------------------------------------------
 
 function toggleMobileMenu(forceState) {
     const isOpen = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('open');
