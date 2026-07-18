@@ -6,35 +6,45 @@
     <title>PedalosKopi1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Підтримка темної теми через CSS змінні */
-        body { background-color: #111827; color: #f3f4f6; transition: background 0.3s; }
+        /* Стилі тем та інтерфейсу */
+        body { background-color: #111827; color: #f3f4f6; transition: background 0.3s; margin: 0; padding: 0; }
         body.light-theme { background-color: #f9fafb; color: #1f2937; }
         
-        .card-bg { background: #1f2937; }
-        body.light-theme .card-bg { background: #ffffff; border: 1px solid #e5e7eb; }
-
-        textarea { background: #111827 !important; color: #e5e7eb !important; }
-        body.light-theme textarea { background: #f9fafb !important; color: #1f2937 !important; border-color: #d1d5db; }
+        .app-card { background: #1f2937; border-radius: 12px; transition: background 0.3s; }
+        body.light-theme .app-card { background: #ffffff; border: 1px solid #e5e7eb; }
+        
+        textarea { background: #111827 !important; border: 1px solid #374151 !important; color: #e5e7eb !important; }
+        body.light-theme textarea { background: #f9fafb !important; border: 1px solid #d1d5db !important; color: #1f2937 !important; }
+        
+        .preview-img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #4b5563; }
+        body.light-theme .preview-img { border-color: #d1d5db; }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-6xl mx-auto card-bg rounded-xl shadow-lg p-8">
-        <!-- Заголовок -->
-        <div class="flex items-center gap-3 border-b border-gray-700 pb-4 mb-6">
+<body class="p-4">
+
+    <div class="app-card max-w-4xl mx-auto p-6 shadow-xl">
+        <div class="flex items-center gap-3 mb-6">
             <div class="text-blue-500 text-3xl">✨</div>
-            <div>
-                <h1 class="text-2xl font-bold">PedalosKopi1.0</h1>
+            <h1 class="text-xl font-bold">PedalosKopi1.0</h1>
+        </div>
+
+        <!-- Налаштування -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 body.light-theme & {bg-gray-100 border-gray-200}">
+                <h2 class="font-semibold mb-2">Режим читання</h2>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="mode" value="manga" checked> Манґа</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="mode" value="manhwa"> Манхва</label>
+                </div>
+            </div>
+            <div id="dropzone" class="border-2 border-dashed border-gray-500 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700 transition">
+                <p class="text-sm">Натисніть або перетягніть файли</p>
+                <input type="file" id="fileInput" multiple accept=".png, .jpg, .jpeg, .webp" class="hidden">
             </div>
         </div>
 
-        <!-- Зона завантаження -->
-        <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center cursor-pointer mb-6">
-            <p class="text-blue-400 font-medium">Перетягніть сторінки сюди</p>
-            <input type="file" id="fileInput" multiple accept=".png, .jpg, .jpeg, .webp" class="hidden">
-        </div>
-
-        <!-- Візуальне відображення фото -->
-        <div id="photoGrid" class="flex flex-wrap gap-2 mb-6"></div>
+        <!-- Візуал завантажених фото -->
+        <div id="photoGrid" class="flex flex-wrap gap-2 mb-6 min-h-[64px]"></div>
 
         <button id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mb-6 transition">Видобути текст</button>
         
@@ -42,45 +52,86 @@
     </div>
 
     <script>
-        // Перевірка теми з батьківського вікна (якщо в iframe)
-        if (window.parent.document.body.classList.contains('light-theme')) {
-            document.body.classList.add('light-theme');
-        }
+        // --- КОНФІГУРАЦІЯ ---
+        const RENDER_API_URL = "https://ТВІЙ-СЕРВЕР.onrender.com/process_single"; // <--- ВСТАВ СЮДИ СВОЄ ПОСИЛАННЯ
 
-        function createCardHTML(id, filename, imageUrl) {
-            return `
-            <div class="card-bg p-4 rounded-lg border border-gray-700 shadow-md">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-medium text-sm truncate">${filename}</span>
-                    <button onclick="copyText('${id}')" class="text-xs bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded transition">Копіювати</button>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <img src="${imageUrl}" class="h-48 object-contain bg-gray-800 rounded">
-                    <textarea id="text-${id}" class="w-full h-48 p-2 rounded text-sm border focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-            </div>`;
+        // --- СИНХРОНІЗАЦІЯ ТЕМИ ---
+        function syncTheme() {
+            if (window.parent.document.body.classList.contains('light-theme')) {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
         }
+        new MutationObserver(syncTheme).observe(window.parent.document.body, { attributes: true, attributeFilter: ['class'] });
+        syncTheme();
 
-        function copyText(id) {
-            const textArea = document.getElementById(`text-${id}`);
-            textArea.select();
-            document.execCommand('copy');
-            alert('Скопійовано!');
-        }
+        // --- ЛОГІКА ФАЙЛІВ ---
+        const fileInput = document.getElementById('fileInput');
+        const dropzone = document.getElementById('dropzone');
+        dropzone.onclick = () => fileInput.click();
 
-        // Візуалізація фото
         fileInput.addEventListener('change', (e) => {
             const grid = document.getElementById('photoGrid');
             grid.innerHTML = '';
             Array.from(e.target.files).forEach(file => {
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
-                img.className = 'w-16 h-16 object-cover rounded border border-gray-600';
+                img.className = 'preview-img';
                 grid.appendChild(img);
             });
         });
 
-        // ... (додай сюди логіку fetch з попереднього коду для обробки)
+        // --- ОБРОБКА ---
+        async function copyText(id) {
+            const text = document.getElementById(`text-${id}`).value;
+            await navigator.clipboard.writeText(text);
+            alert('Скопійовано в буфер обміну!');
+        }
+
+        document.getElementById('submitBtn').onclick = async () => {
+            const files = fileInput.files;
+            if (files.length === 0) return alert('Оберіть файли!');
+            
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const cardId = 'card-' + i;
+                
+                // Створюємо картку-заглушку
+                container.insertAdjacentHTML('beforeend', `
+                    <div id="${cardId}" class="app-card p-4 border border-gray-700">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm font-bold truncate">${file.name}</span>
+                            <span class="text-xs text-blue-400">Обробка...</span>
+                        </div>
+                        <textarea id="text-${i}" class="w-full h-32 p-2 rounded text-sm"></textarea>
+                        <button onclick="copyText('${i}')" class="mt-2 text-xs bg-gray-600 px-3 py-1 rounded">Копіювати</button>
+                    </div>
+                `);
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('mode', mode);
+
+                try {
+                    const response = await fetch(RENDER_API_URL, { method: 'POST', body: formData });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        document.getElementById(`text-${i}`).value = data.text;
+                        document.querySelector(`#${cardId} .text-blue-400`).textContent = 'Готово';
+                    } else {
+                        document.getElementById(`text-${i}`).value = 'Помилка: ' + data.error;
+                    }
+                } catch (err) {
+                    document.getElementById(`text-${i}`).value = 'Помилка зв\'язку з сервером';
+                }
+            }
+        };
     </script>
 </body>
 </html>
