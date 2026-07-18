@@ -6,7 +6,6 @@
     <title>PedalosKopi1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Стилі тем та інтерфейсу */
         body { background-color: #111827; color: #f3f4f6; transition: background 0.3s; margin: 0; padding: 0; }
         body.light-theme { background-color: #f9fafb; color: #1f2937; }
         
@@ -28,22 +27,21 @@
             <h1 class="text-xl font-bold">PedalosKopi1.0</h1>
         </div>
 
-        <!-- Налаштування -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 body.light-theme & {bg-gray-100 border-gray-200}">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
                 <h2 class="font-semibold mb-2">Режим читання</h2>
                 <div class="flex gap-4">
                     <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="mode" value="manga" checked> Манґа</label>
                     <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="mode" value="manhwa"> Манхва</label>
                 </div>
             </div>
+            <!-- Сюди додано обробку Drag and Drop -->
             <div id="dropzone" class="border-2 border-dashed border-gray-500 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-700 transition">
                 <p class="text-sm">Натисніть або перетягніть файли</p>
                 <input type="file" id="fileInput" multiple accept=".png, .jpg, .jpeg, .webp" class="hidden">
             </div>
         </div>
 
-        <!-- Візуал завантажених фото -->
         <div id="photoGrid" class="flex flex-wrap gap-2 mb-6 min-h-[64px]"></div>
 
         <button id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mb-6 transition">Видобути текст</button>
@@ -52,8 +50,7 @@
     </div>
 
     <script>
-        // --- КОНФІГУРАЦІЯ ---
-        const RENDER_API_URL = "https://ТВІЙ-СЕРВЕР.onrender.com/process_single"; // <--- ВСТАВ СЮДИ СВОЄ ПОСИЛАННЯ
+        const RENDER_API_URL = "https://ТВІЙ-СЕРВЕР.onrender.com/process_single"; // <--- НЕ ЗАБУДЬ ВСТАВИТИ ПОСИЛАННЯ
 
         // --- СИНХРОНІЗАЦІЯ ТЕМИ ---
         function syncTheme() {
@@ -66,21 +63,34 @@
         new MutationObserver(syncTheme).observe(window.parent.document.body, { attributes: true, attributeFilter: ['class'] });
         syncTheme();
 
-        // --- ЛОГІКА ФАЙЛІВ ---
+        // --- ЛОГІКА ФАЙЛІВ ТА DRAG AND DROP ---
         const fileInput = document.getElementById('fileInput');
         const dropzone = document.getElementById('dropzone');
+
         dropzone.onclick = () => fileInput.click();
 
-        fileInput.addEventListener('change', (e) => {
+        // Події для Drag and Drop
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('bg-gray-700'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('bg-gray-700'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('bg-gray-700');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
             const grid = document.getElementById('photoGrid');
             grid.innerHTML = '';
-            Array.from(e.target.files).forEach(file => {
+            fileInput.files = files; // Оновлюємо список файлів в input
+            Array.from(files).forEach(file => {
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
                 img.className = 'preview-img';
                 grid.appendChild(img);
             });
-        });
+        }
 
         // --- ОБРОБКА ---
         async function copyText(id) {
@@ -101,7 +111,6 @@
                 const file = files[i];
                 const cardId = 'card-' + i;
                 
-                // Створюємо картку-заглушку
                 container.insertAdjacentHTML('beforeend', `
                     <div id="${cardId}" class="app-card p-4 border border-gray-700">
                         <div class="flex justify-between mb-2">
@@ -109,7 +118,7 @@
                             <span class="text-xs text-blue-400">Обробка...</span>
                         </div>
                         <textarea id="text-${i}" class="w-full h-32 p-2 rounded text-sm"></textarea>
-                        <button onclick="copyText('${i}')" class="mt-2 text-xs bg-gray-600 px-3 py-1 rounded">Копіювати</button>
+                        <button onclick="copyText('${i}')" class="mt-2 text-xs bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded transition">Копіювати</button>
                     </div>
                 `);
 
@@ -126,9 +135,11 @@
                         document.querySelector(`#${cardId} .text-blue-400`).textContent = 'Готово';
                     } else {
                         document.getElementById(`text-${i}`).value = 'Помилка: ' + data.error;
+                        document.querySelector(`#${cardId} .text-blue-400`).textContent = 'Помилка';
                     }
                 } catch (err) {
                     document.getElementById(`text-${i}`).value = 'Помилка зв\'язку з сервером';
+                    document.querySelector(`#${cardId} .text-blue-400`).textContent = 'Помилка';
                 }
             }
         };
