@@ -259,35 +259,49 @@
             submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
             submitBtn.textContent = 'Обробка...';
 
-            let criticalErrorOccurred = false; // Статус аварійного вимикача
+            let criticalErrorOccurred = false; 
 
             for (let i = 0; i < selectedFiles.length; i++) {
                 let file = selectedFiles[i];
                 const cardId = 'card-' + i;
+                const fileUrl = URL.createObjectURL(file); // Генеруємо тимчасове посилання на оригінал
                 
                 // 1. ПЕРЕВІРКА АВАРІЙНОГО СТАНУ
                 if (criticalErrorOccurred) {
                     AppLogger.warn(`🚨 Файл ${file.name} пропущено через аварійну зупинку.`);
                     resultsContainer.insertAdjacentHTML('beforeend', `
                         <div id="${cardId}" class="sub-card p-4 opacity-50">
-                            <div class="flex justify-between items-center mb-2">
+                            <div class="flex justify-between items-center mb-2 gap-2">
                                 <span class="text-sm font-bold truncate">${file.name}</span>
                                 <span class="status-pill status-halted">Зупинено</span>
                             </div>
-                            <textarea id="text-${i}" class="w-full h-10 p-2 rounded-lg text-sm text-center bg-gray-800" disabled>Обробку скасовано (Аварійний захист)</textarea>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <img src="${fileUrl}" class="w-full sm:w-24 h-32 object-cover rounded border border-gray-600 grayscale shrink-0">
+                                <textarea id="text-${i}" class="w-full h-32 p-2 rounded-lg text-sm text-center bg-gray-800" disabled>Обробку скасовано (Аварійний захист)</textarea>
+                            </div>
                         </div>
                     `);
-                    continue; // Пропускаємо файл і йдемо до наступного (який теж буде пропущено)
+                    continue; 
                 }
 
+                // Вставка картки з двоколонковим макетом (фото + текст)
                 resultsContainer.insertAdjacentHTML('beforeend', `
                     <div id="${cardId}" data-filename="${file.name}" class="sub-card p-4">
                         <div class="flex justify-between items-center mb-2 gap-2">
                             <span class="text-sm font-bold truncate">${file.name}</span>
                             <span class="status-pill status-compress">Стиснення...</span>
                         </div>
-                        <textarea id="text-${i}" class="w-full h-32 p-2 rounded-lg text-sm"></textarea>
-                        <button onclick="copyText('${i}')" class="mt-2 text-xs bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-lg transition">Копіювати</button>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <!-- Ліва частина: Клікабельне Фото -->
+                            <a href="${fileUrl}" target="_blank" title="Відкрити оригінал у новій вкладці" class="shrink-0 mx-auto sm:mx-0">
+                                <img src="${fileUrl}" class="w-32 sm:w-24 h-32 object-cover rounded border border-gray-600 hover:opacity-80 transition">
+                            </a>
+                            <!-- Права частина: Текст та кнопки -->
+                            <div class="flex-grow flex flex-col gap-2">
+                                <textarea id="text-${i}" class="w-full h-32 p-2 rounded-lg text-sm resize-none"></textarea>
+                                <button onclick="copyText('${i}')" class="self-end text-xs bg-gray-600 hover:bg-gray-500 px-4 py-1.5 rounded-lg transition">Копіювати</button>
+                            </div>
+                        </div>
                     </div>
                 `);
 
@@ -311,10 +325,9 @@
                         signal: controller.signal 
                     });
                     
-                    clearTimeout(timeoutId); // Якщо встигли - скасовуємо таймер смерті
+                    clearTimeout(timeoutId); 
 
                     if (!response.ok) {
-                        // Якщо сервер повернув 500 (впав) або іншу критичну помилку
                         criticalErrorOccurred = true; 
                         throw new Error(`Сервер впав з помилкою ${response.status}`);
                     }
@@ -324,7 +337,7 @@
                         document.getElementById(`text-${i}`).value = data.text;
                         setStatus(cardId, 'done', 'Готово');
                         
-                        // 3. ПАУЗА-ОХОЛОДЖЕННЯ (Garbage Collection)
+                        // 3. ПАУЗА-ОХОЛОДЖЕННЯ 
                         if (i < selectedFiles.length - 1) {
                             AppLogger.log("⏳ Охолодження сервера: пауза 2 секунди перед наступним файлом...");
                             setStatus(cardId, 'done', 'Охолодження...');
@@ -341,7 +354,7 @@
                     
                     if (err.name === 'AbortError') {
                         document.getElementById(`text-${i}`).value = 'Помилка: Таймаут (сервер занадто довго відповідав)';
-                        criticalErrorOccurred = true; // Активуємо аварійний вимикач
+                        criticalErrorOccurred = true; 
                     } else {
                         document.getElementById(`text-${i}`).value = 'Помилка: ' + (err.message || 'сервер недоступний');
                     }
