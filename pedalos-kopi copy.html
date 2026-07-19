@@ -108,21 +108,6 @@
     </div>
 
     <script>
-        // 1. Створюємо наш крутий логер
-        const AppLogger = {
-            step: 1,
-            log: function(msg, data = "") {
-                console.log(`%c[Крок ${this.step++}] 🕒 ${new Date().toLocaleTimeString()} 🟢 ${msg}`, 'color: #4ade80; font-weight: bold;', data);
-            },
-            warn: function(msg) {
-                console.warn(`%c[УВАГА] 🕒 ${new Date().toLocaleTimeString()} 🟠 ${msg}`, 'color: #fb923c; font-weight: bold;');
-            },
-            error: function(msg, err = "") {
-                console.error(`%c[ПОМИЛКА] 🕒 ${new Date().toLocaleTimeString()} 🔴 ${msg}`, 'color: #f87171; font-weight: bold;', err);
-            },
-            reset: function() { this.step = 1; }
-        };
-
         // !!! ВАЖЛИВО: встав сюди реальну адресу свого Render-сервера !!!
         const RENDER_API_URL = "https://postokopi-bekend.onrender.com/process_single";
         const IS_API_CONFIGURED = !RENDER_API_URL.includes("ТВІЙ-СЕРВЕР");
@@ -262,24 +247,14 @@
             URL.revokeObjectURL(url);
         };
 
-        // --- ОНОВЛЕНА КНОПКА З ЛОГУВАННЯМ ---
         submitBtn.onclick = async () => {
-            AppLogger.reset();
-            AppLogger.log("Натиснуто кнопку обробки. Перевірка файлів.");
-
-            if (selectedFiles.length === 0) {
-                AppLogger.warn("Спроба запуску без файлів. Зупинено.");
-                return alert('Оберіть файли!');
-            }
+            if (selectedFiles.length === 0) return alert('Оберіть файли!');
 
             if (!IS_API_CONFIGURED) {
-                AppLogger.error("API URL не налаштовано.");
                 return alert('Адреса сервера розпізнавання (RENDER_API_URL) ще не вказана в pedalos-kopi.html. Звернись до того, хто налаштовує сайт.');
             }
 
             const mode = document.querySelector('input[name="mode"]:checked').value;
-            AppLogger.log(`Вибрано файлів: ${selectedFiles.length}. Режим читання: ${mode}`);
-
             resultsContainer.innerHTML = '';
             resultsEmptyState.classList.add('hidden');
             resultsActions.classList.remove('hidden');
@@ -291,8 +266,6 @@
             for (let i = 0; i < selectedFiles.length; i++) {
                 const file = selectedFiles[i];
                 const cardId = 'card-' + i;
-                
-                AppLogger.log(`--- Готуємо файл ${i + 1} з ${selectedFiles.length}: ${file.name} (Розмір: ${(file.size / 1024).toFixed(2)} KB) ---`);
 
                 resultsContainer.insertAdjacentHTML('beforeend', `
                     <div id="${cardId}" data-filename="${file.name}" class="sub-card p-4">
@@ -310,40 +283,27 @@
                 formData.append('mode', mode);
 
                 try {
-                    AppLogger.log(`Відправляємо POST запит на Render API... Очікуємо відповідь.`);
-                    const startTime = Date.now();
-
                     const response = await fetch(RENDER_API_URL, { method: 'POST', body: formData });
-                    
-                    const timeTaken = ((Date.now() - startTime) / 1000).toFixed(2);
-                    AppLogger.log(`Відповідь від сервера отримана за ${timeTaken} секунд! HTTP Статус: ${response.status} ${response.statusText}`);
 
                     if (!response.ok) {
-                        AppLogger.error(`Сервер відповів помилкою HTTP ${response.status}`);
                         throw new Error(`Сервер відповів помилкою ${response.status}`);
                     }
 
-                    AppLogger.log(`Парсимо JSON відповідь...`);
                     const data = await response.json();
 
                     if (data.success) {
-                        AppLogger.log(`✅ Текст успішно видобуто для ${file.name}! Довжина тексту: ${data.text.length} символів.`);
                         document.getElementById(`text-${i}`).value = data.text;
                         setStatus(cardId, 'done', 'Готово');
                     } else {
-                        AppLogger.error(`Бекенд відповів успішно, але повернув логічну помилку:`, data.error);
                         document.getElementById(`text-${i}`).value = 'Помилка: ' + data.error;
                         setStatus(cardId, 'error', 'Помилка');
                     }
                 } catch (err) {
-                    AppLogger.error(`Критичний збій мережі (Fetch failed). Файл: ${file.name}`, err);
-                    AppLogger.warn(`Можливі причини: 1. Сервер Render "спить". 2. Неправильний RENDER_API_URL. 3. Проблема CORS.`);
                     document.getElementById(`text-${i}`).value = 'Помилка зв\'язку з сервером: ' + (err.message || 'сервер недоступний');
                     setStatus(cardId, 'error', 'Помилка');
                 }
             }
 
-            AppLogger.log("🎉 Обробку всіх файлів завершено.");
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
             submitBtn.textContent = submitBtnDefaultText;
